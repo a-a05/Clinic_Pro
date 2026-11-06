@@ -1,0 +1,303 @@
+### 1. تسجيل المدير (Admin)
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Ahmad",
+  "lastName": "Admin",
+  "phoneNo": "0790000001",
+  "email": "admin@clinic.com",
+  "username": "admin123",
+  "password": "password123",
+  "role_id": 1
+}
+
+### 2. تسجيل الدكتور (Doctor)
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Ahmad",
+  "lastName": "Doctor",
+  "phoneNo": "0790000002",
+  "email": "doctor@clinic.com",
+  "username": "doctor_ahmad",
+  "password": "password123",
+  "role_id": 2
+}
+
+### 3. تسجيل موظف الاستقبال (Receptionist)
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Khaled",
+  "lastName": "Rec",
+  "phoneNo": "0790000003",
+  "email": "reception@clinic.com",
+  "username": "khaled_rec",
+  "password": "password123",
+  "role_id": 3
+}
+
+### تسجيل الدخول
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "khaled_rec",
+  "password": "password123"
+}
+
+### ==========================================
+### المتغيرات العامة (Variables) - حط التوكنز هون مرة وحدة
+### ==========================================
+@baseUrl = http://localhost:5000/api
+
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGVJZCI6MSwiaWF0IjoxNzkzOTg4NjU1LCJleHAiOjE3OTQwNzUwNTV9.3VD0ljGEVhrbMzc00P43e0fj1OWTgM3vO5cVBbqakkE
+@doctorToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGVJZCI6MiwiaWF0IjoxNzkzOTg4NTU5LCJleHAiOjE3OTQwNzQ5NTl9.94c8xM935MIEt5ShurclhgVT2qR0jBX7uwlPsEa_GWo
+@recToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsInJvbGVJZCI6MywiaWF0IjoxNzkzOTg4Njk3LCJleHAiOjE3OTQwNzUwOTd9.acovJBLEoSz8NrjH290s7sQS296eY-dgQd1hPHeWB3k
+
+
+### ==========================================
+### المرحلة 2: إدارة المرضى (Patients)
+### ==========================================
+
+### أ. إضافة مريض (عمر) من قبل موظف الاستقبال
+POST {{baseUrl}}/patients/add
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+  "nationalId": "9951001234",
+  "firstName": "Omar",
+  "secondName": "Ali",
+  "thirdName": "Ahmad",
+  "lastName": "Khaled",
+  "dateOfBirth": "1995-05-15",
+  "gender": "Male",
+  "address": "Amman, Jordan",
+  "phoneNo": "0780000000",
+  "email": "omar@example.com"
+}
+
+### ب. مريض (سامي) بيسجل لحاله أونلاين (عبر البوت أو الموقع)
+POST {{baseUrl}}/auth/register-online
+Content-Type: application/json
+
+{
+    "firstName": "ahmad",
+    "lastName": "alherbawi",
+    "phoneNo": "0785340671",
+    "email": "ahmad.alherbawi2005@gmail.com",
+    "username": "ahmad321",
+    "password": "password123"
+}
+
+### ج. عرض جميع المرضى (صلاحية الاستقبال)
+GET {{baseUrl}}/patients
+Authorization: Bearer {{recToken}}
+
+### ==========================================
+### المرحلة 3: المواعيد (Appointments)
+### ==========================================
+
+### أ. حجز موعد (من قبل الاستقبال للمريض رقم 1 عند الدكتور رقم 2)
+POST {{baseUrl}}/appointments/add
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+  "patientId": 1,
+  "doctorUserId": 2,
+  "appointmentDate": "2026-10-30",
+  "startsAt": "2026-10-30T10:00:00Z",
+  "endsAt": "2026-10-30T10:30:00Z",
+  "reason": "Toothache and checkup",
+  "appointmentStatus": "Scheduled"
+}
+
+### ب. عرض المواعيد بصلاحية الاستقبال (رح يجيب كل مواعيد العيادة)
+GET {{baseUrl}}/appointments
+Authorization: Bearer {{recToken}}
+
+### ج. عرض المواعيد بصلاحية الدكتور (رح يجيب مواعيده هو بس)
+GET {{baseUrl}}/appointments
+Authorization: Bearer {{doctorToken}}
+
+### ==========================================
+### المرحلة 4: الجلسة السريرية (Visits & Notes)
+### ==========================================
+
+### أ. تسجيل وصول المريض (Check-in) - الاستقبال
+POST {{baseUrl}}/visits/check-in
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+    "appointmentId": 1
+}
+
+### ب. إدخال المريض للطبيب (Started) - الاستقبال أو الطبيب
+PUT {{baseUrl}}/visits/1/status
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+    "status": "Started"
+}
+
+### ج. كتابة الملاحظات الطبية (Visit Notes) - الدكتور فقط
+POST {{baseUrl}}/visits/note
+Content-Type: application/json
+Authorization: Bearer {{doctorToken}}
+
+{
+    "visitId": 1,
+    "noteText": "The patient suffers from a minor cavity in the lower right molar. Needs a filling in the next session."
+}
+
+### د. إنهاء الجلسة (Ended) - الدكتور أو الاستقبال
+PUT {{baseUrl}}/visits/1/status
+Content-Type: application/json
+Authorization: Bearer {{doctorToken}}
+
+{
+    "status": "Ended"
+}
+
+### ==========================================
+### المرحلة 5: الخطط العلاجية (Treatments)
+### ==========================================
+
+### أ. إنشاء خطة علاجية للمريض رقم 1 - الدكتور فقط
+POST {{baseUrl}}/treatments/plan
+Content-Type: application/json
+Authorization: Bearer {{doctorToken}}
+
+{
+    "patientId": 1,
+    "planName": "General Checkup and Fillings",
+    "planStatus": "Active"
+}
+
+### ب. إضافة إجراء (حشوة) للخطة رقم 1 - الدكتور فقط
+POST {{baseUrl}}/treatments/item
+Content-Type: application/json
+Authorization: Bearer {{doctorToken}}
+
+{
+    "planId": 1,
+    "procedureName": "Composite Filling",
+    "toothNumber": "46",
+    "estimatedCost": 50.00,
+    "itemStatus": "Planned"
+}
+
+### ج. عرض الخطط العلاجية للمريض رقم 1 - الدكتور فقط
+GET {{baseUrl}}/treatments/1
+Authorization: Bearer {{doctorToken}}
+
+### ==========================================
+### المرحلة 6: الفوترة والمالية (Invoices)
+### ==========================================
+
+### أ. إصدار فاتورة للزيارة رقم 1 - الاستقبال
+POST {{baseUrl}}/invoices
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+    "patientId": 1,
+    "visitId": 1,
+    "totalAmount": 70.00,
+    "invoiceStatus": "Unpaid"
+}
+
+### ب. تسجيل دفعة نقدية للفاتورة رقم 1 - الاستقبال
+POST {{baseUrl}}/invoices/payment
+Content-Type: application/json
+Authorization: Bearer {{recToken}}
+
+{
+    "invoiceId": 1,
+    "amount": 70.00,
+    "method": "Cash"
+}
+
+### ج. عرض جميع الفواتير - المدير
+GET {{baseUrl}}/invoices
+Authorization: Bearer {{adminToken}}
+
+### ==========================================
+### نظام الـ OTP واسترجاع الحساب
+### ==========================================
+
+### طلب كود OTP
+POST {{baseUrl}}/auth/forgot-credentials
+Content-Type: application/json
+
+{
+    "identifier": "ahmad.alherbawi2005@gmail.com"
+}
+
+### التحقق من كود الـ OTP
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+    "identifier": "ahmad.alherbawi2005@gmail.com",
+    "otpCode": "230880"
+}
+
+### 3. التغيير النهائي للباسوورد
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+    "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGlmaWVyIjoiYWhtYWQuYWxoZXJiYXdpMjAwNUBnbWFpbC5jb20iLCJpYXQiOjE3OTMzNjY2MDQsImV4cCI6MTc5MzM2NzUwNH0.GVyoCi6uzY_j-7D5-zkMsWgdN6gPJpPAupeFUdKGeos",
+    "newPassword": "NewPassword2026!"
+}
+
+### استرجاع اسم المستخدم
+POST {{baseUrl}}/auth/recover-username
+Content-Type: application/json
+
+{
+    "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGlmaWVyIjoiYWhtYWQuYWxoZXJiYXdpMjAwNUBnbWFpbC5jb20iLCJpYXQiOjE3OTMzNjc3MDEsImV4cCI6MTc5MzM2ODYwMX0.ksduehbHdDmgitYDJyTMqJGoxBLguo_WQqCjcIx_QB4"
+}
+
+### Test Gemini AI Chat
+POST http://localhost:5000/api/chat
+Content-Type: application/json
+
+{
+  "userId": 5,
+  "message": "مرحبا، بدي أراجع عيادة الأسنان وأحجز موعد بتاريخ 2026-11-05 عندي وجع بطاحونتي"
+}
+
+### Test Full Flow - Step 2: Select Time and Book Appointment
+POST http://localhost:5000/api/chat
+Content-Type: application/json
+
+### Test Full Flow - Step 2: Select Time and Book Appointment
+POST http://localhost:5000/api/chat
+Content-Type: application/json
+
+{
+  "userId": 5,
+  "history": [
+    {
+      "role": "user",
+      "parts": [{ "text": "مرحبا، بدي أراجع عيادة الأسنان وأحجز موعد بتاريخ 2026-11-05 عندي وجع بطاحونتي" }]
+    },
+    {
+      "role": "model",
+      "parts": [{ "text": "الدكتور أحمد معاك، وسلامتك ألف سلامة ما تشوف شر. الأوقات المتاحة بتاريخ 05-11-2026 هي: 9:00 صباحاً، 10:00 صباحاً، 12:00 ظهراً، 1:00 ظهراً، 2:00 بعد الظهر، 3:00 بعد الظهر، وينسبك حتى أثبت لك الموعد؟" }]
+    }
+  ],
+  "message": "تمام، ثبتلي الموعد الساعة 10:00 الصبح لو سمحت"
+}
+
+### Test Get Available Slots after booking
+GET http://localhost:5000/api/appointments/available-slots?date=2026-11-05
